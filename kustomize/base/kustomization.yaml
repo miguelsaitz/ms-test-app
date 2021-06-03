@@ -1,0 +1,42 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - git@github.com:Busuu/kustomize-app.git/http-service?ref=v1.1.1
+
+namePrefix:
+  ms-test-app-
+
+commonLabels:
+  app.kubernetes.io/name: ms-test-app
+  app.kubernetes.io/team: platform
+  app.kubernetes.io/project: k8s
+
+patchesStrategicMerge:
+  - |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ms-test-app
+    spec:
+      template:
+        metadata:
+          labels:
+            admission.datadoghq.com/enabled: "true"
+        spec:
+          containers:
+            - name: app
+              ports:
+                - name: http
+                  containerPort: 8000
+              livenessProbe:
+                httpGet:
+                  port: http
+                  path: /
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 100Mi
+                limits:
+                  cpu: 150m
+                  memory: 150Mi
